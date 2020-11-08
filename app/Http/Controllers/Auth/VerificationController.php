@@ -3,40 +3,41 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Auth\VerifiesEmails;
+use App\OtpCode;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class VerificationController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Email Verification Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller is responsible for handling email verification for any
-    | user that recently registered with the application. Emails may also
-    | be re-sent if the user didn't receive the original email message.
-    |
-    */
-
-    use VerifiesEmails;
-
     /**
-     * Where to redirect users after verification.
+     * Handle the incoming request.
      *
-     * @var string
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function __invoke(Request $request)
     {
-        $this->middleware('auth');
-        $this->middleware('signed')->only('verify');
-        $this->middleware('throttle:6,1')->only('verify', 'resend');
+        $otp = OtpCode::where('otp', $request->otp)->first();
+
+        if (!$otp) {
+            return response()->json([
+                'response_code' => '01',
+                'response_message' => 'Kode OTP salah',
+            ]);
+        } 
+
+        $now = Carbon::now();
+
+        if($now > $otp->valid_until){
+            return response()->json([
+                'response_code' => '01',
+                'response_message' => 'Kode OTP sudah kadaluwarsa. Silahkan daftar lagi'
+            ]);
+        }
+
+        return response()->json([
+            'response_code' => '00',
+            'response_message' => 'Kode OTP berhasil diverifikasi'
+        ]);
     }
 }
