@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\OtpCode;
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
-class RegenerateOtpController extends Controller
+class UpdatePasswordController extends Controller
 {
     /**
      * Handle the incoming request.
@@ -18,15 +16,18 @@ class RegenerateOtpController extends Controller
      */
     public function __invoke(Request $request)
     {
-        $otp = OtpCode::all()->first();
-        $request->replace(['otp' => rand(000000, 999999)]);
+        $this->validate($request, [
+            'email' => 'email|required',
+            'password' => 'required|confirmed|min:6'
+        ]);
 
-        $user = User::all()->first();
+        User::where('email', $request->email)->update([
+            'password' => bcrypt(request('password'))
+        ]);
 
         return response()->json([
             'response_code' => '00',
-            'response_message' => 'Kode OTP berhasil dikirim. Cek ulang email anda',
-            'data' => $user
-        ]);
+            'respon_message' => 'password berhasil diubah',
+        ], 200);
     }
 }
