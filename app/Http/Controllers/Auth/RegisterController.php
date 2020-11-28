@@ -27,8 +27,11 @@ class RegisterController extends Controller
 
         ]);
 
-        $data_request = $request->all();
-        $user = User::create($data_request);
+        $user = User::create([
+            'name'     => request('name'),
+            'email'    => request('email'),
+            'password' => bcrypt(request('password'))
+        ]);
         $data['user'] = $user;
 
         event(new UserRegisteredEvent($user));
